@@ -67,14 +67,7 @@ const createSolicitud = async (req, res) => {
       clienteId: userClient.idCliente.toString(),
       clienteName: cliente.razonSocial,
       tipoViajeId: tipoViaje._id,
-      tipoViajeName: tipoViaje.descripcion,
-      tipoSeguro: tipoSeguro,
-      compania: compania,
-      numeroPoliza: numeroPoliza,
-      modelo: modelo,
-      peso: peso,
-      fotoUnidad: fotoUnidad,
-      urlMapa: urlMapa,
+      tipoViajeName: tipoViaje.descripcion
     }).save();
 
     // Iterar sobre 'destinos' para crear detalles de la solicitud-------------------------------------------------------------------------------------------------------------
@@ -111,14 +104,8 @@ const createSolicitud = async (req, res) => {
         folio: nuevaSolicitud.folio,
         localidadOrigenId: destino.localidadOrigenId,
         localidadOrigenName: origenData.municipio,
-        //localidadOrigenCodigo: origenData.codigo,
-        //localidadOrigenTipoCobro: origenData.tipoUnidad,
-
         localidadDestinoId: destino.localidadDestinoId,
         localidadDestinoName: destinoData.municipio,
-        //localidadDestinoCodigo: destinoData.codigo,
-        //localidadDestinoTipoCobro: destinoData.tipoUnidad,
-
         unidadId: destino.tipoUnidad,
         unidadMarca: rendimiento ? rendimiento.marca : undefined,
         unidadModelo: rendimiento ? rendimiento.modelo : undefined,
@@ -133,7 +120,14 @@ const createSolicitud = async (req, res) => {
         numeroInterior:destino.numeroInterior,
         numeroExterior:destino.numeroExterior,
         colonia:destino.colonia,
-        cp:destino.cp
+        cp:destino.cp,
+        tipoSeguro:destino.tipoSeguro,
+        compania: destino.compania,
+        numeroPoliza:destino.numeroPoliza,
+        modelo:destino.modelo,
+        peso:destino.peso,
+        fotoUnidad:destino.fotoUnidad,
+        urlMapa:destino.urlMapa
       }).save();
     });
 
@@ -887,6 +881,48 @@ const getSolicitudDetalleByFolio = async (req, res) => {
     );
 
     res.formatResponse('ok', 200, 'Detalles de la solicitud encontrados con éxito', detallesEnriquecidos);
+  } catch (error) {
+    console.error(error);
+    await responseError(409, error, res);
+  }
+};
+
+const getAllByStatus = async (req, res) => {
+
+  try {
+    const { status } = req.params;
+
+    let solicitudes = await SolicitudModel.find({ estatus: status });
+
+    res.formatResponse('ok', 200, 'Detalles de la solicitud encontrados con éxito', solicitudes);
+
+  } catch (error) {
+    console.error(error);
+    await responseError(409, error, res);
+  }
+
+
+}
+const getSolicitudDetalleCompletoByFolio = async (req, res) => {
+  try {
+    const { folio } = req.params;
+    const folioNum = parseInt(folio, 10);
+    let solicitudes = await SolicitudModel.find({ folio: folioNum });
+    const detallesSolicitud = await SolicitudDetalleModel.find({ folio: folioNum });
+
+    // Procesar cada detalle para agregar el último historial
+    const detallesConHistorial = await Promise.all(detallesSolicitud.map(async detalle => {
+      const ultimoHistorial = await CotizacionHistorialModel.findOne({ quoteId: detalle._id }).sort({ fechaCreacion: -1 });
+      return { ...detalle.toObject(), ultimoHistorial };
+    }));
+
+    // Agregar los detalles procesados a cada solicitud
+    solicitudes = solicitudes.map(solicitud => {
+      const detalles = detallesConHistorial.filter(detalle => detalle.folio === solicitud.folio);
+      return { ...solicitud.toObject(), detalles };
+    });
+
+    res.formatResponse('ok', 200, 'Detalles de la solicitud encontrados con éxito', solicitudes);
   } catch (error) {
     console.error(error);
     await responseError(409, error, res);
@@ -1899,6 +1935,7 @@ module.exports = {
   getSolicitudesByUserId,
   getSolicitudDetalleByFolio,
   getSolicitudDetallesimpleByFolio,
+  getSolicitudDetalleCompletoByFolio,
   sendSolicitudDetails,
 
   createQuote01,
@@ -1912,4 +1949,5 @@ module.exports = {
   getQuoteHistoryByFolio,
   getSolicitudesHistorialByClienteId,
   actualizarUnidadIdEnSolicitudDetalle,
+  getAllByStatus
 };

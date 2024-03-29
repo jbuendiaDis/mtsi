@@ -47,22 +47,7 @@ const SolicitudesSchema = new mongoose.Schema({
   updatedAt: {
     type: String,
     default: getCurrentFormattedDate // Establece la fecha en el formato deseado al crear
-  },
-  tipoSeguro: {
-    type: String 
-  },compania: {
-    type: String 
-  },numeroPoliza: {
-    type: String 
-  },modelo: {
-    type: String 
-  },peso: {
-    type: String 
-  },fotoUnidad: {
-    type: String 
-  },urlMapa : {
-    type: String 
-  },
+  }
 });
 
 SolicitudesSchema.pre('save', function(next) {

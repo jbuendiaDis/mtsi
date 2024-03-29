@@ -120,7 +120,22 @@ const SolicitudDetalleSchema = new mongoose.Schema({
   },
   cp:{
     type: String,
-  }
+  },
+  tipoSeguro: {
+    type: String 
+  },compania: {
+    type: String 
+  },numeroPoliza: {
+    type: String 
+  },modelo: {
+    type: String 
+  },peso: {
+    type: String 
+  },fotoUnidad: {
+    type: String 
+  },urlMapa : {
+    type: String 
+  },
 
   
 
