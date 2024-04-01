@@ -31,13 +31,15 @@ const createSolicitud = async (req, res) => {
       return res.formatResponse('ok', 204, 'El campo "destinos" es obligatorio y debe ser un array no vacío.', []);
     }
 
+
+    /*
     // Verificar que todos los destinos tienen el mismo tipoViaje
     const primerTipoViaje = destinos[0].tipoViaje;
     const tiposViajeSonIguales = destinos.every((destino) => destino.tipoViaje === primerTipoViaje);
 
     if (!tiposViajeSonIguales) {
       return res.formatResponse('ok', 204, 'Todos los destinos deben tener el mismo tipo de viaje.', []);
-    }
+    }*/
     // Buscar la descripción del tipo de viaje usando primerTipoViajeId
     const tipoViaje = await CatalogModel.findById(primerTipoViaje);
     if (!tipoViaje) {
