@@ -61,6 +61,8 @@ const SolicitudDetalleSchema = new mongoose.Schema({
         destinityNumberInterior:{type: String },
         destinityColonies:{type: String },
         destinityCp:{type: String },
+        clienteId:{type: String },
+        clienteName:{type: String },
 
   
 

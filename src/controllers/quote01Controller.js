@@ -114,6 +114,8 @@ const createSolicitud = async (req, res) => {
         destinityNumberInterior:destino.destinityNumberInterior,
         destinityColonies:destino.caldestinityColoniesle,
         destinityCp:destino.destinityCp,
+        clienteId: userClient.idCliente.toString(),
+        clienteName: cliente.razonSocial
 
 
       }).save();
@@ -152,118 +154,94 @@ const getCotizacionByFolio = async (req, res) => {
 
 
 try {
+
+  // Rodando
+  let responseRodando = [];
+  if (solicitudDetalle_Rodando.length !== 0) {
+    console.log("---------------Rodando---------------");
+    responseRodando = await calcularDetalles(solicitudDetalle_Rodando);
+  }
+
+  // Sin Rodar
+  let responseSinRodar = [];
+
+  if (solicitudDetalle_SinRodar.length !== 0) {
+
+    console.log("---------------Sin Rodar---------------");
+
   
-  let responseRodando = await calcularDetalles(folio, solicitud, solicitudDetalle_Rodando);
+
+      for (const detalle  of solicitudDetalle_SinRodar) {
 
 
-  let v_tipoViaje = 0;
+            // TODO:CAmbiar por algo dinamico o catalogo
+            const idUbicacionC = '65efddd1dd24935a76c1fe2f';
+            const idUbicacionCName = 'Tianguistenco';
+            const idUbicacionCcodigo = 1428;
 
-    switch (tipoViajeId._id.toString()) {
-      case '657d410b090a350a86310db8': // Rodando
-        v_tipoViaje = 1;
-        break;
-      case '657d411f090a350a86310dc0': // Sin rodar
-        v_tipoViaje = 2;
+            // Crear nuevo detalle de viaje de C a A (el primer destino original)
+            const viajeDeCA = {
+              ...detalle.toObject(),
+              localidadOrigenId: idUbicacionC,
+              localidadOrigenName: idUbicacionCName,
+              localidadOrigenCodigo: idUbicacionCcodigo,
+              localidadDestinoId: detalle.localidadOrigenId,
+              localidadDestinoName: detalle.localidadOrigenName,
+              localidadDestinoCodigo: detalle.localidadOrigenCodigo
+          };
 
-        // TODO:CAmbiar por algo dinamico o catalogo
-        const idUbicacionC = '6582738f73bd91d97dbd8f28';
-        const idUbicacionCName = 'Santiago Tianguistenco';
-        const idUbicacionCcodigo = 1428;
-
-        // Crear nuevo detalle de viaje de C a A (el primer destino original)
-        const viajeDeCA = {
-          ...detalle_solicitud.toObject(), // Clonar el primer objeto y ajustar para viaje de C a A
-          localidadOrigenId: idUbicacionC,
-          localidadOrigenName: idUbicacionCName,
-          localidadOrigenCodigo: idUbicacionCcodigo,
-
-          localidadDestinoId: detalle_solicitud.localidadOrigenId,
-          localidadDestinoName: detalle_solicitud.localidadOrigenName,
-          localidadDestinoCodigo: detalle_solicitud.localidadOrigenCodigo,
-        };
-
-        // Crear nuevo detalle de viaje de B a C (el último destino original)
-        const viajeDeBC = {
-          ...solicitudDetalle[solicitudDetalle.length - 1].toObject(), // Clonar el último objeto y ajustar para viaje de B a C
-          localidadOrigenId: solicitudDetalle[solicitudDetalle.length - 1].localidadDestinoId,
-          localidadOrigenName: solicitudDetalle[solicitudDetalle.length - 1].localidadDestinoName,
-          localidadOrigenCodigo: solicitudDetalle[solicitudDetalle.length - 1].localidadDestinoCodigo,
-
-          localidadDestinoId: idUbicacionC,
-          localidadDestinoName: idUbicacionCName,
-          localidadDestinoCodigo: idUbicacionCcodigo,
-        };
-
-        // Insertar los nuevos detalles al inicio y al final del array de detalles
-        solicitudDetalle = [viajeDeCA, ...solicitudDetalle, viajeDeBC];
-        break;
-      case '657d4127090a350a86310dc4': // Local
-        v_tipoViaje = 3;
-        break;
-      default:
-        return res.formatResponse('ok', 204, 'Tipo de viaje no válido.', []);
-    }
+            // Crear nuevo detalle de viaje de B a C (el último destino original)
+            const viajeDeBC = {
+              ...detalle.toObject(),
+              localidadOrigenId: detalle.localidadDestinoId,
+              localidadOrigenName: detalle.localidadDestinoName,
+              localidadOrigenCodigo: detalle.localidadDestinoCodigo,
+              localidadDestinoId: idUbicacionC,
+              localidadDestinoName: idUbicacionCName,
+              localidadDestinoCodigo: idUbicacionCcodigo,
+          };
 
 
+          // Insertar los nuevos detalles al inicio y al final del array de detalles
+
+          let detallesModificados = [detalle, viajeDeBC, viajeDeCA  ];
+
+          const rutasFaltantes = [];
+
+          for (const detalle of detallesModificados) {
+            const peaje = await Peajes.findOne({
+              localidadOrigen: detalle.localidadOrigenId,
+              localidadDestino: detalle.localidadDestinoId,
+            });
+            console.log("peaje-localidadOrigenId:",detalle.localidadOrigenId);
+            console.log("peaje-localidadDestinoId:",detalle.localidadDestinoId);
+            console.log("peaje:",peaje);
+
+            if (!peaje) {
+              // Agregar al array los códigos de origen y destino que no tienen peaje
+              rutasFaltantes.push(`de ${detalle.localidadOrigenName} a ${detalle.localidadDestinoName}`);
+            }
+          }
+
+          if (rutasFaltantes.length > 0) {
+            // Si hay rutas faltantes, regresa un error 204 con los detalles de las rutas faltantes
+            return res.formatResponse('ok',204,`No se encontraron rutas para los siguientes trayectos: ${rutasFaltantes.join(', ')}`,
+              [],
+            );
+          }
 
 
+          const response = await calcularDetalles(detallesModificados);
+          responseSinRodar = responseSinRodar.concat(response);
+      }
+      
+  }
 
-
-
-  let responseSinRodar = await calcularDetalles(folio, solicitud, solicitudDetalle_SinRodar);
-
-// Combinar los dos resultados en un solo array si ambos son arrays
+  // Combinar los dos resultados en un solo array si ambos son arrays
   let combinedResponse = [...responseRodando, ...responseSinRodar];
   
   res.formatResponse('ok', 200, 'Datos consultados con éxito.', combinedResponse);
-  
-/*
-  
-    for (const [index, detalle_solicitud] of solicitudDetalle.entries()) {
-
-      console.log("detalle_solicitud[index]:",detalle_solicitud[index]);
-      console.log("detalle_solicitud[index]:",detalle_solicitud);
-      console.log("detalle_solicitud[index]:",index);
-  
-    // Buscar la descripción del tipo de viaje usando tipoViajeId de la solicitud
-    const tipoViaje = await CatalogModel.findById(detalle_solicitud.tipoViajeId);
-    if (!tipoViaje) {
-      return res.formatResponse('ok', 204, 'Tipo de viaje no encontrado. --2', []);
-    }
-
-    
-
-    const rutasFaltantes = [];
-
-    for (const detalle of solicitudDetalle) {
-      const peaje = await Peajes.findOne({
-        localidadOrigen: detalle.localidadOrigenId,
-        localidadDestino: detalle.localidadDestinoId,
-      });
-      //console.log("peaje:",peaje);
-
-      if (!peaje) {
-        // Agregar al array los códigos de origen y destino que no tienen peaje
-        rutasFaltantes.push(`de ${detalle.localidadOrigenName} a ${detalle.localidadDestinoName}`);
-      }
-    }
-
-    if (rutasFaltantes.length > 0) {
-      // Si hay rutas faltantes, regresa un error 204 con los detalles de las rutas faltantes
-      return res.formatResponse(
-        'ok',
-        204,
-        `No se encontraron rutas para los siguientes trayectos: ${rutasFaltantes.join(', ')}`,
-        [],
-      );
-    }
-
-    // Continuar con el procesamiento si todas las rutas existen...
-    
-*/
-    
-
-    
+     
    
 } catch (error) {
     await responseError(409, error, res);
@@ -271,7 +249,9 @@ try {
 };
 
 
-async function calcularDetalles(folio,solicitud, solicitudDetalle) {
+async function calcularDetalles(solicitudDetalle) {
+
+  console.log("solicitudDetalle----->:",solicitudDetalle);
 
   const configureData = await configureDataModel.findOne({ status: 'Activo' });
   let v_tipoViaje = 0;
@@ -378,6 +358,10 @@ async function calcularDetalles(folio,solicitud, solicitudDetalle) {
 
 
       v_kms = peaje ? peaje.kms : 0;
+      if(v_kms<=100){
+        v_tipoViaje = 3;
+
+      }
       v_rend = rendimiento ? rendimiento.rendimiento : 0;
       if (v_tipoViaje === 2) {
         v_rend -= 1;
@@ -401,7 +385,7 @@ async function calcularDetalles(folio,solicitud, solicitudDetalle) {
       v_ferry = gastos && gastos.ferry ? gastos.ferry : 0;
       v_hotel = gastos && gastos.hoteles ? gastos.hoteles : 0;
 
-      console.log('v_hotel', v_hotel);
+    
 
       // Cálculo para hoteles basado en los kilómetros totales
       const nochesHotel = Math.floor(v_kms / limiteKmHotel); // Usa el valor de la bandera
@@ -454,12 +438,11 @@ async function calcularDetalles(folio,solicitud, solicitudDetalle) {
       v_ganancia = gananciaEntry ? gananciaEntry.ganancia : 0;
       v_costoTotal = v_total + v_financiamiento + v_inflacion + v_ganancia;
 
-      console.log("v_total:",v_total);
-      // Aquí guardamos en quote_history
+       // Aquí guardamos en quote_history
       const quoteHistory = new CotizacionHistorialModel({
         quoteId: detalle._id,
-        folio,
-        clienteNombre: solicitud.clienteName,
+        folio:detalle.folio,
+        clienteNombre: detalle.clienteName,
         origen: detalle.localidadOrigenName,
         destino: detalle.localidadDestinoName,
         kms: v_kms,
@@ -499,8 +482,8 @@ async function calcularDetalles(folio,solicitud, solicitudDetalle) {
 
       return {
         id: detalle._id,
-        // folio: folio,
-        clienteNombre: solicitud.clienteName,
+        folio: detalle.folio,
+        clienteNombre: detalle.clienteName,
         origen: detalle.localidadOrigenName,
         destino: detalle.localidadDestinoName,
         kms: parseFloat(v_kms.toFixed(2)),
