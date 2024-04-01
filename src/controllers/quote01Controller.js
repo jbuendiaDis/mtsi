@@ -116,18 +116,32 @@ const createSolicitud = async (req, res) => {
         tipoViajeName: v_tipoViaje,
         manual: destino.manual,
         dimensiones: destino.dimensiones,
-        calle:destino.calle,
-        numeroInterior:destino.numeroInterior,
-        numeroExterior:destino.numeroExterior,
-        colonia:destino.colonia,
-        cp:destino.cp,
+        
         tipoSeguro:destino.tipoSeguro,
         compania: destino.compania,
         numeroPoliza:destino.numeroPoliza,
         modelo:destino.modelo,
         peso:destino.peso,
         fotoUnidad:destino.fotoUnidad,
-        urlMapa:destino.urlMapa
+        urlMapa:destino.urlMapa,
+
+
+        calle:destino.calle,
+        numeroInterior:destino.numeroInterior,
+        numeroExterior:destino.numeroExterior,
+        colonia:destino.colonia,
+        cp:destino.cp,
+
+        destinityStreet:destino.destinityStreet,
+        destinityOutdoorNumber:destino.destinityOutdoorNumber,
+        destinityNumberInterior:destino.destinityNumberInterior,
+        destinityColonies:destino.caldestinityColoniesle,
+        destinityCp:destino.destinityCp,
+
+
+
+        
+
       }).save();
     });
 

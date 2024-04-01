@@ -33,7 +33,7 @@ const SolicitudDetalleSchema = new mongoose.Schema({
   tipoViajeName: {type: String,required: true},
   manual: {type: String },
   dimensiones: {type: String },
-  
+
   createdAt: {type: String,default: getCurrentFormattedDate},
   updatedAt: {type: String,default: getCurrentFormattedDate},
   
@@ -50,6 +50,17 @@ const SolicitudDetalleSchema = new mongoose.Schema({
   peso: {type: String },
   fotoUnidad: {type: String },
   urlMapa : {type: String },
+
+
+
+  
+
+
+        destinityStreet:{type: String },
+        destinityOutdoorNumber:{type: String },
+        destinityNumberInterior:{type: String },
+        destinityColonies:{type: String },
+        destinityCp:{type: String },
 
   
 
