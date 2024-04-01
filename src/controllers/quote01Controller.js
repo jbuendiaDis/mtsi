@@ -692,12 +692,14 @@ const getSolicitudesHistorialByClienteId = async (req, res) => {
     if (clientId === '0' || clientId > 0) {
       // Si el clientId es 0, mostrar todas las solicitudes
       const solicitudes = await SolicitudModel.find({})
-        .select('-_id folio estatus createdAt userId tipoViajeId')
+        .select('-_id folio estatus createdAt userId tipoViajeId clienteId')
         .sort({ folio: -1 });
 
       // Continúa con el procesamiento de las solicitudes
+      console.log(solicitudes);
       const response = await Promise.all(
         solicitudes.map(async (solicitud) => {
+          console.log("solicitudes:",solicitud);
           const cliente = await ClienteModel.findById(solicitud.clienteId);
           const userName = await getUserNameById(solicitud.userId);
 
