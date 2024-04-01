@@ -1,7 +1,7 @@
 // routes/quote01Routes.js
 const express = require('express');
-
 const router = express.Router();
+const adaptData = require('../middlewares/dataAdapter');
 
 const quote01Controller = require('../controllers/quote01Controller');
 const { verifyToken } = require('../utils/verifyToken');
@@ -21,8 +21,8 @@ router.put('/quotes01/cancel/:folio', verifyToken,formatResponse, quote01Control
 
 
 
-
-router.post('/v2/solicitud/01', verifyToken, formatResponse, quote01Controller.createSolicitud);
+router.post('/v2/solicitud/01', verifyToken, adaptData, formatResponse, quote01Controller.createSolicitud);
+//router.post('/v2/solicitud/01', verifyToken, formatResponse, quote01Controller.createSolicitud);
 
 router.get('/v2/cotizacion/:folio', verifyToken, formatResponse, quote01Controller.getCotizacionByFolio);
 router.get('/v2/solicitud/detalle/:folio', verifyToken, formatResponse, quote01Controller.getSolicitudDetalleByFolio);

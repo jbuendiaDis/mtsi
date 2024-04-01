@@ -12,130 +12,44 @@ function getCurrentFormattedDate() {
   }
 
 const SolicitudDetalleSchema = new mongoose.Schema({
-  solicitudId: {
-    type: mongoose.Schema.Types.ObjectId, // O type: Number, si vas a usar el folio como referencia
-    ref: 'Solicitudes',
-    required: true
-  },
-  folio: {
-    type: Number,
-    required: true
-  },
-  localidadOrigenId: {
-    type: String,
-    required: true
-  },
+  solicitudId: {    type: mongoose.Schema.Types.ObjectId,     ref: 'Solicitudes',    required: true  },
+  folio: {    type: Number, required: true },
+  localidadOrigenId: {type: String,required: true},
+  localidadOrigenName: {type: String,required: true },
+  localidadOrigenCodigo: { type: String,  },
+  localidadOrigenTipoCobro: {type: String},
+  localidadDestinoId: {type: String,required: true},
+  localidadDestinoName: {type: String,required: true},
+  localidadDestinoCodigo: {type: String,},
+  localidadDestinoTipoCobro: {type: String,},      
   
-  localidadOrigenName: {
-    type: String,
-    required: true
-  },
-  localidadOrigenCodigo: {
-    type: String,
-   // required: true
-  },
-  localidadOrigenTipoCobro: {
-    type: String,
-   // required: true
-  },
-
- 
-
-  localidadDestinoId: {
-    type: String,
-    required: true
-  },
-  localidadDestinoName: {
-    type: String,
-    required: true
-  },
-  localidadDestinoCodigo: {
-    type: String,
-   // required: true
-  },
-  localidadDestinoTipoCobro: {
-    type: String,
-    //required: true
-  },      
-  unidadId: {
-    type: String,
-    required: true
-  },
-  unidadMarca: {
-    type: String,
-   
-  },
-  unidadModelo: {
-    type: String,
-    
-  },
-  trasladoId: {
-    type: String,
-    required: true
-  },
-  trasladoTipo: {
-    type: String,
-    required: true
-  },
-  trasladoConcepto: {
-    type: String,
-    required: true
-  },
-  tipoViajeId: {
-    type: String,
-    required: true
-  },
-  tipoViajeName: {
-    type: String,
-    required: true
-  },
-
-
+  unidadId: {type: String,required: true},
+  unidadMarca: {type: String,},
+  unidadModelo: {type: String,},
+  trasladoId: {type: String,required: true},
+  trasladoTipo: {type: String,required: true},
+  trasladoConcepto: {type: String,required: true},
+  tipoViajeId: {type: String,required: true},
+  tipoViajeName: {type: String,required: true},
+  manual: {type: String },
+  dimensiones: {type: String },
   
-  manual: {
-    type: String 
-  },
-  dimensiones: {
-    type: String 
-  },
-  createdAt: {
-    type: String,
-    default: getCurrentFormattedDate // Establece la fecha en el formato deseado al crear
-  },
-  updatedAt: {
-    type: String,
-    default: getCurrentFormattedDate // Establece la fecha en el formato deseado al crear
-  },
-  calle:{
-    type: String,
-  },
-  numeroInterior:{
-    type: String,
-  },
-  numeroExterior:{
-    type: String,
-  },
-  colonia:{
-    type: String,
-  },
-  cp:{
-    type: String,
-  },
-  tipoSeguro: {
-    type: String 
-  },compania: {
-    type: String 
-  },numeroPoliza: {
-    type: String 
-  },modelo: {
-    type: String 
-  },peso: {
-    type: String 
-  },fotoUnidad: {
-    type: String 
-  },urlMapa : {
-    type: String 
-  },
+  createdAt: {type: String,default: getCurrentFormattedDate},
+  updatedAt: {type: String,default: getCurrentFormattedDate},
+  
+  calle:{type: String,},
+  numeroInterior:{type: String,},
+  numeroExterior:{type: String,},
+  colonia:{type: String,},
+  cp:{type: String,},
+  
+  tipoSeguro: {type: String },
+  compania: {type: String },
+  numeroPoliza: {    type: String },
+  modelo: {type: String },
+  peso: {type: String },
+  fotoUnidad: {type: String },
+  urlMapa : {type: String },
 
   
 

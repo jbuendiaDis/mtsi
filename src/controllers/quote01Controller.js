@@ -41,7 +41,7 @@ const createSolicitud = async (req, res) => {
     // Buscar la descripción del tipo de viaje usando primerTipoViajeId
     const tipoViaje = await CatalogModel.findById(primerTipoViaje);
     if (!tipoViaje) {
-      return res.formatResponse('ok', 204, 'Tipo de viaje no encontrado.', []);
+      return res.formatResponse('ok', 204, 'Tipo de viaje no encontrado.--1 ', []);
     }
 
     // Buscar el cliente asociado al userId
@@ -166,7 +166,7 @@ const getCotizacionByFolio = async (req, res) => {
     // Buscar la descripción del tipo de viaje usando tipoViajeId de la solicitud
     const tipoViaje = await CatalogModel.findById(solicitud.tipoViajeId);
     if (!tipoViaje) {
-      return res.formatResponse('ok', 204, 'Tipo de viaje no encontrado.', []);
+      return res.formatResponse('ok', 204, 'Tipo de viaje no encontrado. --2', []);
     }
 
     let v_tipoViaje = 0;
