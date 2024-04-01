@@ -31,7 +31,15 @@ const SolicitudesSchema = new mongoose.Schema({
     type: String,
     required: true
   },
- 
+  tipoViajeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Catalogs',
+    required: true
+  },
+  tipoViajeName: {
+    type: String,
+    required: true
+  },
   createdAt: {
     type: String,
     default: getCurrentFormattedDate // Establece la fecha en el formato deseado al crear

@@ -132,25 +132,27 @@ const createSolicitud = async (req, res) => {
 };
 
 const getCotizacionByFolio = async (req, res) => {
+  const folio = parseInt(req.params.folio, 10);
+  const solicitud = await SolicitudModel.findOne({ folio });
+  let solicitudDetalle = await SolicitudDetalleModel.find({ folio });
+  if (!solicitud) {
+    return res.formatResponse('ok', 204, 'No se encontraron cotizaciones para el folio especificado', []);
+  }
+  if (solicitudDetalle.length === 0) {
+    res.formatResponse('ok', 204, 'No se encontraron ártidas para el folio especificado', []);
+    return;
+  }
+  
+
   try {
-    //console.log('req.params:', req.params);
-    const folio = parseInt(req.params.folio, 10);
-    const solicitud = await SolicitudModel.findOne({ folio });
-    let solicitudDetalle = await SolicitudDetalleModel.find({ folio });
+    for (const [index, detalle_solicitud] of solicitudDetalle.entries()) {
 
-    // Verifica si la solicitud no se encontró
-    if (!solicitud) {
-      return res.formatResponse('ok', 204, 'No se encontraron cotizaciones para el folio especificado', []);
-    }
-
-    // Verifica si el array de cotizaciones está vacío
-    if (solicitudDetalle.length === 0) {
-      res.formatResponse('ok', 204, 'No se encontraron cotizaciones para el folio especificado', []);
-      return;
-    }
-
+      console.log("detalle_solicitud[index]:",detalle_solicitud[index]);
+      console.log("detalle_solicitud[index]:",detalle_solicitud);
+      console.log("detalle_solicitud[index]:",index);
+  
     // Buscar la descripción del tipo de viaje usando tipoViajeId de la solicitud
-    const tipoViaje = await CatalogModel.findById(solicitud.tipoViajeId);
+    const tipoViaje = await CatalogModel.findById(detalle_solicitud.tipoViajeId);
     if (!tipoViaje) {
       return res.formatResponse('ok', 204, 'Tipo de viaje no encontrado. --2', []);
     }
@@ -206,8 +208,6 @@ const getCotizacionByFolio = async (req, res) => {
     const rutasFaltantes = [];
 
     for (const detalle of solicitudDetalle) {
-      //console.log('detalle.localidadOrigenId.toString():', detalle.localidadOrigenId.toString());
-      //console.log('detalle.localidadDestinoId.toString():', detalle.localidadDestinoId.toString());
       const peaje = await Peajes.findOne({
         localidadOrigen: detalle.localidadOrigenId,
         localidadDestino: detalle.localidadDestinoId,
@@ -231,315 +231,293 @@ const getCotizacionByFolio = async (req, res) => {
     }
 
     // Continuar con el procesamiento si todas las rutas existen...
-
-    const configureData = await configureDataModel.findOne({ status: 'Activo' });
-
-    // Variable para llevar el control de si es la primera iteración
-    let primeraIteracion = true;
-
-    const response = await Promise.all(
-      solicitudDetalle.map(async (detalle) => {
-        // console.log("detalle:",detalle);
-
-        let v_kms = 0;
-        let v_rend = 0;
-        let v_totalLitros = 0;
-        let v_diesel = 0;
-        let v_dieselExtra = 0;
-        let v_comidas = 0;
-        let v_costoPasajeOrigen = 0;
-        let v_costoPasajeDestino = 0;
-        let v_totalPeajes = 0;
-        let v_seguroTraslado = 0;
-
-        // let v_pagoEstadia=0;
-        let v_ferry = 0;
-        let v_hotel = 0;
-        let v_vuelo = 0;
-        let v_taxi = 0;
-        let v_udsUsa = 0;
-        let v_liberacionPuerto = 0;
-        let v_talachas = 0;
-        let v_fitosanitarias = 0;
-        let v_urea = 0;
-        let v_extra = 0;
-
-        let v_pasajeLocalDestino = 0;
-        let v_pasajeLocalOrigen = 0;
-
-        
-
-        
-
-        let v_sueldo = 0;
-        let v_pagoEstadia = 0;
-        let v_subtotal = 0;
-        let v_admon = 0;
-        let v_total = 0;
-        let v_inflacion = 0;
-        let v_financiamiento = 0;
-        let v_ganancia = 0;
-        let v_costoTotal = 0;
-
-        // Buscar el documento de Peajes(rutas) que coincide con origenId y destinoId
-        const peaje = await Peajes.findOne({
-          localidadOrigen: detalle.localidadOrigenId,
-          localidadDestino: detalle.localidadDestinoId,
-        });
-
-        //console.log('detalle.unidadIdxxxx:', detalle.unidadId);
-
-        let rendimiento = 0;
-        if (detalle.unidadId != 'other') {
-          rendimiento = await RendimientoModel.findById(detalle.unidadId);
-        }
-
-        const rutas = await Peajes.findOne({
-          localidadOrigen: detalle.localidadOrigenId,
-          localidadDestino: detalle.localidadDestinoId,
-        });
-
-        //console.log("rutas",rutas._id);
-
-        const gastos = await GastosModel.findOne({
-          rutaId: rutas._id,
-        });
-
-        //console.log("localidadOrigenCodigo",detalle.localidadOrigenCodigo.toString());
-        //console.log("localidadDestinoCodigo",detalle.localidadDestinoCodigo.toString());
-
-        //console.log('gastos', gastos);
-
-        const banderaPasajeOrigen = await BanderaModel.findOne({ nombre: 'pasajeOrigen' });
-        const banderaPasajeDestino = await BanderaModel.findOne({ nombre: 'pasajeDestino' });
-        const traslado = await TrasladoModel.findById(detalle.trasladoId);
-        const banderaLimiteSueldos = await BanderaModel.findOne({ nombre: 'limite sueldos' });
-        const banderaPorcentajeAdmon = await BanderaModel.findOne({ nombre: 'PorcentajeAdmon' });
-
-        const limiteKmHotelBandera = await BanderaModel.findOne({ nombre: 'limiteKmHotel' });
-        const costoNocheHotelBandera = await BanderaModel.findOne({ nombre: 'costoNocheHotel' });
-        const limiteKmHotel = limiteKmHotelBandera ? limiteKmHotelBandera.valor : 800;
-        const costoNocheHotel = costoNocheHotelBandera ? costoNocheHotelBandera.valor : 400;
-
-        const v_valorExtraPasajeOrigen = banderaPasajeOrigen ? banderaPasajeOrigen.valor : 0;
-        const v_valorExtraPasajeDestino = banderaPasajeDestino ? banderaPasajeDestino.valor : 0;
-        const limiteSueldos = banderaLimiteSueldos ? banderaLimiteSueldos.valor : 5; // Usar 5 como valor predeterminado si no se encuentra
-        const porcentajeAdmon = banderaPorcentajeAdmon ? banderaPorcentajeAdmon.valor : 8; // Usar 8 como valor predeterminado si no se encuentra
-
-        const porcentajeFinanciamiento = configureData ? configureData.financiamiento : 0;
-        //const v_otrosGastos = configureData ? configureData.otros : 0;
-        const v_otrosGastos = configureData && 'otros' in configureData ? configureData.otros : 0;
-
-
-        v_kms = peaje ? peaje.kms : 0;
-        v_rend = rendimiento ? rendimiento.rendimiento : 0;
-        if (v_tipoViaje === 2) {
-          v_rend -= 1;
-        }
-        v_totalLitros = v_kms / v_rend;
-        v_costoDiesel = configureData ? configureData.combustible : 0;
-        v_diesel = v_costoDiesel * v_totalLitros;
-        v_dieselExtra = gastos && gastos.dieselExtra ? gastos.dieselExtra : 0;
-        v_comidas = gastos && gastos.comidas ? gastos.comidas : 0;
-        v_costoPasajeOrigen = (gastos && gastos.pasajeOrigen ? gastos.pasajeOrigen : 0) + v_valorExtraPasajeOrigen;
-        if (v_tipoViaje === 3 && !primeraIteracion) {
-          v_costoPasajeOrigen = 0;
-        } else {
-          primeraIteracion = false; // Cambiar el estado de la primera iteración después de la primera vuelta
-        }
-
-        v_costoPasajeDestino = (gastos && gastos.pasajeDestino ? gastos.pasajeDestino : 0) + v_valorExtraPasajeDestino;
-        v_totalPeajes = peaje ? peaje.totalPeajes : 0;
-        v_seguroTraslado = gastos && gastos.seguroTraslado ? gastos.seguroTraslado : 0;
-
-        v_ferry = gastos && gastos.ferry ? gastos.ferry : 0;
-        v_hotel = gastos && gastos.hoteles ? gastos.hoteles : 0;
-
-        console.log('v_hotel', v_hotel);
-
-        // Cálculo para hoteles basado en los kilómetros totales
-        const nochesHotel = Math.floor(v_kms / limiteKmHotel); // Usa el valor de la bandera
-        console.log('v_kms', v_kms);
-        console.log('limiteKmHotel', limiteKmHotel);
-        console.log('nochesHotel', nochesHotel);
-        console.log('costoNocheHotel', costoNocheHotel);
-
-        //v_hotel = nochesHotel * v_hotel;
-
-        v_vuelo = gastos && gastos.vuelo ? gastos.vuelo : 0;
-        v_taxi = gastos && gastos.taxi ? gastos.taxi : 0;
-        v_udsUsa = gastos && gastos.udsUsa ? gastos.udsUsa : 0;
-        v_liberacionPuerto = gastos && gastos.liberacionPuerto ? gastos.liberacionPuerto : 0;
-        v_talachas = gastos && gastos.talachas ? gastos.talachas : 0;
-        v_fitosanitarias = gastos && gastos.fitosanitarias ? gastos.fitosanitarias : 0;
-        //console.log("v_fitosanitarias",v_fitosanitarias);
-        v_urea = gastos && gastos.urea ? gastos.urea : 0;
-        v_extra = gastos && gastos.extra ? gastos.extra : 0;
-
-
-        v_pasajeLocalDestino = gastos && gastos.pasajeLocalDestino ? gastos.pasajeLocalDestino : 0;
-        v_pasajeLocalOrigen = gastos && gastos.pasajeLocalOrigen ? gastos.pasajeLocalOrigen : 0;
-
-        v_sueldo = traslado ? (traslado.sueldo < limiteSueldos ? traslado.sueldo * v_kms : traslado.sueldo) : 0;
-        v_pagoEstadia = gastos && gastos.pagoDeEstadia ? gastos.pagoDeEstadia : 0;
-        v_subtotal =
-          v_diesel +
-          v_comidas +
-          v_costoPasajeOrigen +
-          v_costoPasajeDestino +
-          v_totalPeajes +
-          v_seguroTraslado +
-          v_sueldo +
-          v_pagoEstadia +
-          v_ferry +
-          v_hotel +
-          v_vuelo +
-          v_taxi +
-          v_udsUsa +
-          v_liberacionPuerto +
-          v_talachas +
-          v_fitosanitarias +
-          v_urea +
-          v_extra+
-          v_pasajeLocalDestino+
-          v_pasajeLocalOrigen;
-
-        console.log('v_diesel', v_diesel);
-        console.log('v_comidas', v_comidas);
-        console.log('v_costoPasajeOrigen', v_costoPasajeOrigen);
-        console.log('v_costoPasajeDestino', v_costoPasajeDestino);
-        console.log('v_totalPeajes', v_totalPeajes);
-        console.log('v_seguroTraslado', v_seguroTraslado);
-        console.log('v_sueldo', v_sueldo);
-        console.log('v_pagoEstadia', v_pagoEstadia);
-        console.log('v_ferry', v_ferry);
-        console.log('v_hotel', v_hotel);
-        console.log('v_vuelo', v_vuelo);
-        console.log('v_taxi', v_taxi);
-        console.log('v_udsUsa', v_udsUsa);
-        console.log('v_liberacionPuerto', v_liberacionPuerto);
-        console.log('v_talachas', v_talachas);
-        console.log('v_fitosanitarias', v_fitosanitarias);
-        console.log('v_urea', v_urea);
-        console.log('v_extra', v_extra);
-
-        v_admon = (v_subtotal * porcentajeAdmon) / 100;
-        console.log("-------------:",v_otrosGastos);
-        console.log("v_otrosGastos:",v_otrosGastos);
-        console.log("v_admon:",v_admon);
-        console.log("v_subtotal:",v_subtotal);
-        console.log("-------------:",v_subtotal);
-        v_total = v_subtotal + v_admon + v_otrosGastos;
-        v_financiamiento = (v_total * porcentajeFinanciamiento) / 100;
-        porcentajeInflacion = configureData ? configureData.inflacion : 0;
-        v_inflacion = v_total * (porcentajeInflacion / 100);
-
-        const gananciaEntry = await GananciaModel.findOne({
-          desde: { $lte: v_kms },
-          hasta: { $gte: v_kms },
-        });
-
-        v_ganancia = gananciaEntry ? gananciaEntry.ganancia : 0;
-        v_costoTotal = v_total + v_financiamiento + v_inflacion + v_ganancia;
-
-        console.log("v_total:",v_total);
-        // Aquí guardamos en quote_history
-        const quoteHistory = new CotizacionHistorialModel({
-          quoteId: detalle._id,
-          folio,
-          clienteNombre: solicitud.clienteName,
-          origen: detalle.localidadOrigenName,
-          destino: detalle.localidadDestinoName,
-          kms: v_kms,
-          rendimiento: v_rend,
-          litros: v_totalLitros,
-          diesel: v_diesel,
-          dieselExtra: v_dieselExtra,
-          comidas: v_comidas,
-          pasajeOrigen: v_costoPasajeOrigen,
-          pasajeDestino: v_costoPasajeDestino,
-          peajesViapass: v_totalPeajes,
-          seguroTraslado: v_seguroTraslado,
-          sueldo: v_sueldo,
-          pagoEstadia: v_pagoEstadia,
-          hotel: v_hotel,
-          vuelo: v_vuelo,
-          taxi: v_taxi,
-          ferry: v_ferry,
-          udsUsa: v_udsUsa,
-          liberacionPuerto: v_liberacionPuerto,
-          talachas: v_talachas,
-          fitosanitarias: v_fitosanitarias,
-          urea: v_urea,
-          extra: v_extra,
-          pasajeLocalDestino: v_pasajeLocalDestino,
-          pasajeLocalOrigen: v_pasajeLocalOrigen,
-          subTotal: v_subtotal,
-          admon: v_admon,
-          total: v_total,
-          inflacion: v_inflacion,
-          financiamiento: v_financiamiento,
-          ganancia: v_ganancia,
-          costo: v_costoTotal,
-          fechaCreacion: new Date(),
-        });
-        await quoteHistory.save();
-
-        return {
-          id: detalle._id,
-          // folio: folio,
-          clienteNombre: solicitud.clienteName,
-          origen: detalle.localidadOrigenName,
-          destino: detalle.localidadDestinoName,
-          kms: parseFloat(v_kms.toFixed(2)),
-          rendimiento: parseFloat(v_rend.toFixed(2)),
-          litros: parseFloat(v_totalLitros.toFixed(2)),
-          diesel: parseFloat(v_diesel.toFixed(2)),
-          dieselExtra: parseFloat(v_dieselExtra.toFixed(2)),
-
-          comidas: parseFloat(v_comidas.toFixed(2)),
-          pasajeOrigen: parseFloat(v_costoPasajeOrigen.toFixed(2)),
-          pasajeDestino: parseFloat(v_costoPasajeDestino.toFixed(2)),
-          peajesViapass: parseFloat(v_totalPeajes.toFixed(2)),
-          seguroTraslado: parseFloat(v_seguroTraslado.toFixed(2)),
-
-          hotel: parseFloat(v_hotel.toFixed(2)),
-          vuelo: parseFloat(v_vuelo.toFixed(2)),
-          taxi: parseFloat(v_taxi.toFixed(2)),
-          ferry: parseFloat(v_ferry.toFixed(2)),
-          udsUsa: parseFloat(v_udsUsa.toFixed(2)),
-          liberacionPuerto: parseFloat(v_liberacionPuerto.toFixed(2)),
-          talachas: parseFloat(v_talachas.toFixed(2)),
-          fitosanitarias: parseFloat(v_fitosanitarias.toFixed(2)),
-          urea: parseFloat(v_urea.toFixed(2)),
-          extra: parseFloat(v_extra.toFixed(2)),
-
-          pasajeLocalDestino:  parseFloat(v_pasajeLocalDestino.toFixed(2)),
-          pasajeLocalOrigen: parseFloat(v_pasajeLocalOrigen.toFixed(2)),
-
-          sueldo: parseFloat(v_sueldo.toFixed(2)),
-
-          pagoEstadia: parseFloat(v_pagoEstadia.toFixed(2)),
-          subTotal: parseFloat(v_subtotal.toFixed(2)),
-          admon: parseFloat(v_admon.toFixed(2)),
-          total: parseFloat(v_total.toFixed(2)),
-          inflacion: parseFloat(v_inflacion.toFixed(2)),
-          financiamiento: parseFloat(v_financiamiento.toFixed(2)),
-          ganancia: parseFloat(v_ganancia.toFixed(2)),
-          costo: parseFloat(v_costoTotal.toFixed(2)),
-
-          dimensiones: detalle.dimensiones,
-          trasladoTipo: detalle.trasladoTipo,
-
-          manual: detalle.manual,
-        };
-      }),
-    );
+    const response = await calcularDetalles(folio,solicitud, solicitudDetalle);
 
     res.formatResponse('ok', 200, 'Datos consultados con éxito.', response);
-  } catch (error) {
+  }
+} catch (error) {
     await responseError(409, error, res);
   }
+};
+
+
+async function calcularDetalles(folio,solicitud, solicitudDetalle) {
+
+  const configureData = await configureDataModel.findOne({ status: 'Activo' });
+  let v_tipoViaje = 0;
+
+  // Variable para llevar el control de si es la primera iteración
+  let primeraIteracion = true;
+
+  return await Promise.all(
+    solicitudDetalle.map(async (detalle) => {
+
+      const tipoViaje = await CatalogModel.findById(detalle.tipoViajeId);
+      if (!tipoViaje) {
+        console.log("trono");
+        //return res.formatResponse('ok', 204, 'Tipo de viaje no encontrado. --3', []);
+        return null;
+      }
+
+      switch (tipoViaje._id.toString()) {
+        case '657d410b090a350a86310db8': // Rodando
+          v_tipoViaje = 1;
+          break;
+        case '657d411f090a350a86310dc0': // Sin rodar
+          v_tipoViaje = 2;
+           break;
+        case '657d4127090a350a86310dc4': // Local
+          v_tipoViaje = 3;
+          break;
+        default:
+          return null;
+      }
+
+      let v_kms = 0;
+      let v_rend = 0;
+      let v_totalLitros = 0;
+      let v_diesel = 0;
+      let v_dieselExtra = 0;
+      let v_comidas = 0;
+      let v_costoPasajeOrigen = 0;
+      let v_costoPasajeDestino = 0;
+      let v_totalPeajes = 0;
+      let v_seguroTraslado = 0;
+      let v_ferry = 0;
+      let v_hotel = 0;
+      let v_vuelo = 0;
+      let v_taxi = 0;
+      let v_udsUsa = 0;
+      let v_liberacionPuerto = 0;
+      let v_talachas = 0;
+      let v_fitosanitarias = 0;
+      let v_urea = 0;
+      let v_extra = 0;
+      let v_pasajeLocalDestino = 0;
+      let v_pasajeLocalOrigen = 0;
+      let v_sueldo = 0;
+      let v_pagoEstadia = 0;
+      let v_subtotal = 0;
+      let v_admon = 0;
+      let v_total = 0;
+      let v_inflacion = 0;
+      let v_financiamiento = 0;
+      let v_ganancia = 0;
+      let v_costoTotal = 0;
+
+      // Buscar el documento de Peajes(rutas) que coincide con origenId y destinoId
+      const peaje = await Peajes.findOne({
+        localidadOrigen: detalle.localidadOrigenId,
+        localidadDestino: detalle.localidadDestinoId,
+      });
+
+
+      let rendimiento = 0;
+      if (detalle.unidadId != 'other') {
+        rendimiento = await RendimientoModel.findById(detalle.unidadId);
+      }
+
+      const rutas = await Peajes.findOne({
+        localidadOrigen: detalle.localidadOrigenId,
+        localidadDestino: detalle.localidadDestinoId,
+      });
+
+      const gastos = await GastosModel.findOne({
+        rutaId: rutas._id,
+      });
+
+      const banderaPasajeOrigen = await BanderaModel.findOne({ nombre: 'pasajeOrigen' });
+      const banderaPasajeDestino = await BanderaModel.findOne({ nombre: 'pasajeDestino' });
+      const traslado = await TrasladoModel.findById(detalle.trasladoId);
+      const banderaLimiteSueldos = await BanderaModel.findOne({ nombre: 'limite sueldos' });
+      const banderaPorcentajeAdmon = await BanderaModel.findOne({ nombre: 'PorcentajeAdmon' });
+
+      const limiteKmHotelBandera = await BanderaModel.findOne({ nombre: 'limiteKmHotel' });
+      const costoNocheHotelBandera = await BanderaModel.findOne({ nombre: 'costoNocheHotel' });
+      const limiteKmHotel = limiteKmHotelBandera ? limiteKmHotelBandera.valor : 800;
+      const costoNocheHotel = costoNocheHotelBandera ? costoNocheHotelBandera.valor : 400;
+
+      const v_valorExtraPasajeOrigen = banderaPasajeOrigen ? banderaPasajeOrigen.valor : 0;
+      const v_valorExtraPasajeDestino = banderaPasajeDestino ? banderaPasajeDestino.valor : 0;
+      const limiteSueldos = banderaLimiteSueldos ? banderaLimiteSueldos.valor : 5; // Usar 5 como valor predeterminado si no se encuentra
+      const porcentajeAdmon = banderaPorcentajeAdmon ? banderaPorcentajeAdmon.valor : 8; // Usar 8 como valor predeterminado si no se encuentra
+
+      const porcentajeFinanciamiento = configureData ? configureData.financiamiento : 0;
+      //const v_otrosGastos = configureData ? configureData.otros : 0;
+      const v_otrosGastos = configureData && 'otros' in configureData ? configureData.otros : 0;
+
+
+      v_kms = peaje ? peaje.kms : 0;
+      v_rend = rendimiento ? rendimiento.rendimiento : 0;
+      if (v_tipoViaje === 2) {
+        v_rend -= 1;
+      }
+      v_totalLitros = v_kms / v_rend;
+      v_costoDiesel = configureData ? configureData.combustible : 0;
+      v_diesel = v_costoDiesel * v_totalLitros;
+      v_dieselExtra = gastos && gastos.dieselExtra ? gastos.dieselExtra : 0;
+      v_comidas = gastos && gastos.comidas ? gastos.comidas : 0;
+      v_costoPasajeOrigen = (gastos && gastos.pasajeOrigen ? gastos.pasajeOrigen : 0) + v_valorExtraPasajeOrigen;
+      if (v_tipoViaje === 3 && !primeraIteracion) {
+        v_costoPasajeOrigen = 0;
+      } else {
+        primeraIteracion = false; // Cambiar el estado de la primera iteración después de la primera vuelta
+      }
+
+      v_costoPasajeDestino = (gastos && gastos.pasajeDestino ? gastos.pasajeDestino : 0) + v_valorExtraPasajeDestino;
+      v_totalPeajes = peaje ? peaje.totalPeajes : 0;
+      v_seguroTraslado = gastos && gastos.seguroTraslado ? gastos.seguroTraslado : 0;
+
+      v_ferry = gastos && gastos.ferry ? gastos.ferry : 0;
+      v_hotel = gastos && gastos.hoteles ? gastos.hoteles : 0;
+
+      console.log('v_hotel', v_hotel);
+
+      // Cálculo para hoteles basado en los kilómetros totales
+      const nochesHotel = Math.floor(v_kms / limiteKmHotel); // Usa el valor de la bandera
+      //v_hotel = nochesHotel * v_hotel;
+      v_vuelo = gastos && gastos.vuelo ? gastos.vuelo : 0;
+      v_taxi = gastos && gastos.taxi ? gastos.taxi : 0;
+      v_udsUsa = gastos && gastos.udsUsa ? gastos.udsUsa : 0;
+      v_liberacionPuerto = gastos && gastos.liberacionPuerto ? gastos.liberacionPuerto : 0;
+      v_talachas = gastos && gastos.talachas ? gastos.talachas : 0;
+      v_fitosanitarias = gastos && gastos.fitosanitarias ? gastos.fitosanitarias : 0;
+      v_urea = gastos && gastos.urea ? gastos.urea : 0;
+      v_extra = gastos && gastos.extra ? gastos.extra : 0;
+      v_pasajeLocalDestino = gastos && gastos.pasajeLocalDestino ? gastos.pasajeLocalDestino : 0;
+      v_pasajeLocalOrigen = gastos && gastos.pasajeLocalOrigen ? gastos.pasajeLocalOrigen : 0;
+      v_sueldo = traslado ? (traslado.sueldo < limiteSueldos ? traslado.sueldo * v_kms : traslado.sueldo) : 0;
+      v_pagoEstadia = gastos && gastos.pagoDeEstadia ? gastos.pagoDeEstadia : 0;
+      v_subtotal =
+        v_diesel +
+        v_comidas +
+        v_costoPasajeOrigen +
+        v_costoPasajeDestino +
+        v_totalPeajes +
+        v_seguroTraslado +
+        v_sueldo +
+        v_pagoEstadia +
+        v_ferry +
+        v_hotel +
+        v_vuelo +
+        v_taxi +
+        v_udsUsa +
+        v_liberacionPuerto +
+        v_talachas +
+        v_fitosanitarias +
+        v_urea +
+        v_extra+
+        v_pasajeLocalDestino+
+        v_pasajeLocalOrigen;
+
+      v_admon = (v_subtotal * porcentajeAdmon) / 100;
+      v_total = v_subtotal + v_admon + v_otrosGastos;
+      v_financiamiento = (v_total * porcentajeFinanciamiento) / 100;
+      porcentajeInflacion = configureData ? configureData.inflacion : 0;
+      v_inflacion = v_total * (porcentajeInflacion / 100);
+
+      const gananciaEntry = await GananciaModel.findOne({
+        desde: { $lte: v_kms },
+        hasta: { $gte: v_kms },
+      });
+
+      v_ganancia = gananciaEntry ? gananciaEntry.ganancia : 0;
+      v_costoTotal = v_total + v_financiamiento + v_inflacion + v_ganancia;
+
+      console.log("v_total:",v_total);
+      // Aquí guardamos en quote_history
+      const quoteHistory = new CotizacionHistorialModel({
+        quoteId: detalle._id,
+        folio,
+        clienteNombre: solicitud.clienteName,
+        origen: detalle.localidadOrigenName,
+        destino: detalle.localidadDestinoName,
+        kms: v_kms,
+        rendimiento: v_rend,
+        litros: v_totalLitros,
+        diesel: v_diesel,
+        dieselExtra: v_dieselExtra,
+        comidas: v_comidas,
+        pasajeOrigen: v_costoPasajeOrigen,
+        pasajeDestino: v_costoPasajeDestino,
+        peajesViapass: v_totalPeajes,
+        seguroTraslado: v_seguroTraslado,
+        sueldo: v_sueldo,
+        pagoEstadia: v_pagoEstadia,
+        hotel: v_hotel,
+        vuelo: v_vuelo,
+        taxi: v_taxi,
+        ferry: v_ferry,
+        udsUsa: v_udsUsa,
+        liberacionPuerto: v_liberacionPuerto,
+        talachas: v_talachas,
+        fitosanitarias: v_fitosanitarias,
+        urea: v_urea,
+        extra: v_extra,
+        pasajeLocalDestino: v_pasajeLocalDestino,
+        pasajeLocalOrigen: v_pasajeLocalOrigen,
+        subTotal: v_subtotal,
+        admon: v_admon,
+        total: v_total,
+        inflacion: v_inflacion,
+        financiamiento: v_financiamiento,
+        ganancia: v_ganancia,
+        costo: v_costoTotal,
+        fechaCreacion: new Date(),
+      });
+      await quoteHistory.save();
+
+      return {
+        id: detalle._id,
+        // folio: folio,
+        clienteNombre: solicitud.clienteName,
+        origen: detalle.localidadOrigenName,
+        destino: detalle.localidadDestinoName,
+        kms: parseFloat(v_kms.toFixed(2)),
+        rendimiento: parseFloat(v_rend.toFixed(2)),
+        litros: parseFloat(v_totalLitros.toFixed(2)),
+        diesel: parseFloat(v_diesel.toFixed(2)),
+        dieselExtra: parseFloat(v_dieselExtra.toFixed(2)),
+
+        comidas: parseFloat(v_comidas.toFixed(2)),
+        pasajeOrigen: parseFloat(v_costoPasajeOrigen.toFixed(2)),
+        pasajeDestino: parseFloat(v_costoPasajeDestino.toFixed(2)),
+        peajesViapass: parseFloat(v_totalPeajes.toFixed(2)),
+        seguroTraslado: parseFloat(v_seguroTraslado.toFixed(2)),
+
+        hotel: parseFloat(v_hotel.toFixed(2)),
+        vuelo: parseFloat(v_vuelo.toFixed(2)),
+        taxi: parseFloat(v_taxi.toFixed(2)),
+        ferry: parseFloat(v_ferry.toFixed(2)),
+        udsUsa: parseFloat(v_udsUsa.toFixed(2)),
+        liberacionPuerto: parseFloat(v_liberacionPuerto.toFixed(2)),
+        talachas: parseFloat(v_talachas.toFixed(2)),
+        fitosanitarias: parseFloat(v_fitosanitarias.toFixed(2)),
+        urea: parseFloat(v_urea.toFixed(2)),
+        extra: parseFloat(v_extra.toFixed(2)),
+
+        pasajeLocalDestino:  parseFloat(v_pasajeLocalDestino.toFixed(2)),
+        pasajeLocalOrigen: parseFloat(v_pasajeLocalOrigen.toFixed(2)),
+
+        sueldo: parseFloat(v_sueldo.toFixed(2)),
+
+        pagoEstadia: parseFloat(v_pagoEstadia.toFixed(2)),
+        subTotal: parseFloat(v_subtotal.toFixed(2)),
+        admon: parseFloat(v_admon.toFixed(2)),
+        total: parseFloat(v_total.toFixed(2)),
+        inflacion: parseFloat(v_inflacion.toFixed(2)),
+        financiamiento: parseFloat(v_financiamiento.toFixed(2)),
+        ganancia: parseFloat(v_ganancia.toFixed(2)),
+        costo: parseFloat(v_costoTotal.toFixed(2)),
+
+        dimensiones: detalle.dimensiones,
+        trasladoTipo: detalle.trasladoTipo,
+
+        manual: detalle.manual,
+      };
+    }),
+  );
+
 };
 
 const getSolicitudesSimples = async (req, res) => {
