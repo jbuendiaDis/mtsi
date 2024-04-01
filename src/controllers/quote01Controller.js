@@ -132,34 +132,33 @@ const createSolicitud = async (req, res) => {
 };
 
 const getCotizacionByFolio = async (req, res) => {
+
   const folio = parseInt(req.params.folio, 10);
   const solicitud = await SolicitudModel.findOne({ folio });
-  let solicitudDetalle = await SolicitudDetalleModel.find({ folio });
   if (!solicitud) {
     return res.formatResponse('ok', 204, 'No se encontraron cotizaciones para el folio especificado', []);
   }
-  if (solicitudDetalle.length === 0) {
-    res.formatResponse('ok', 204, 'No se encontraron ártidas para el folio especificado', []);
-    return;
-  }
+
+  //let solicitudDetalle = await SolicitudDetalleModel.find({ folio });
+  let solicitudDetalle_Rodando = await SolicitudDetalleModel.find({ 
+    folio: folio, 
+    tipoViajeId: "657d410b090a350a86310db8" 
+   });
   
+  let solicitudDetalle_SinRodar = await SolicitudDetalleModel.find({ 
+    folio: folio, 
+    tipoViajeId: "657d411f090a350a86310dc0" 
+   });
 
-  try {
-    for (const [index, detalle_solicitud] of solicitudDetalle.entries()) {
 
-      console.log("detalle_solicitud[index]:",detalle_solicitud[index]);
-      console.log("detalle_solicitud[index]:",detalle_solicitud);
-      console.log("detalle_solicitud[index]:",index);
+try {
   
-    // Buscar la descripción del tipo de viaje usando tipoViajeId de la solicitud
-    const tipoViaje = await CatalogModel.findById(detalle_solicitud.tipoViajeId);
-    if (!tipoViaje) {
-      return res.formatResponse('ok', 204, 'Tipo de viaje no encontrado. --2', []);
-    }
+  let responseRodando = await calcularDetalles(folio, solicitud, solicitudDetalle_Rodando);
 
-    let v_tipoViaje = 0;
 
-    switch (tipoViaje._id.toString()) {
+  let v_tipoViaje = 0;
+
+    switch (tipoViajeId._id.toString()) {
       case '657d410b090a350a86310db8': // Rodando
         v_tipoViaje = 1;
         break;
@@ -173,14 +172,14 @@ const getCotizacionByFolio = async (req, res) => {
 
         // Crear nuevo detalle de viaje de C a A (el primer destino original)
         const viajeDeCA = {
-          ...solicitudDetalle[0].toObject(), // Clonar el primer objeto y ajustar para viaje de C a A
+          ...detalle_solicitud.toObject(), // Clonar el primer objeto y ajustar para viaje de C a A
           localidadOrigenId: idUbicacionC,
           localidadOrigenName: idUbicacionCName,
           localidadOrigenCodigo: idUbicacionCcodigo,
 
-          localidadDestinoId: solicitudDetalle[0].localidadOrigenId,
-          localidadDestinoName: solicitudDetalle[0].localidadOrigenName,
-          localidadDestinoCodigo: solicitudDetalle[0].localidadOrigenCodigo,
+          localidadDestinoId: detalle_solicitud.localidadOrigenId,
+          localidadDestinoName: detalle_solicitud.localidadOrigenName,
+          localidadDestinoCodigo: detalle_solicitud.localidadOrigenCodigo,
         };
 
         // Crear nuevo detalle de viaje de B a C (el último destino original)
@@ -204,6 +203,35 @@ const getCotizacionByFolio = async (req, res) => {
       default:
         return res.formatResponse('ok', 204, 'Tipo de viaje no válido.', []);
     }
+
+
+
+
+
+
+
+  let responseSinRodar = await calcularDetalles(folio, solicitud, solicitudDetalle_SinRodar);
+
+// Combinar los dos resultados en un solo array si ambos son arrays
+  let combinedResponse = [...responseRodando, ...responseSinRodar];
+  
+  res.formatResponse('ok', 200, 'Datos consultados con éxito.', combinedResponse);
+  
+/*
+  
+    for (const [index, detalle_solicitud] of solicitudDetalle.entries()) {
+
+      console.log("detalle_solicitud[index]:",detalle_solicitud[index]);
+      console.log("detalle_solicitud[index]:",detalle_solicitud);
+      console.log("detalle_solicitud[index]:",index);
+  
+    // Buscar la descripción del tipo de viaje usando tipoViajeId de la solicitud
+    const tipoViaje = await CatalogModel.findById(detalle_solicitud.tipoViajeId);
+    if (!tipoViaje) {
+      return res.formatResponse('ok', 204, 'Tipo de viaje no encontrado. --2', []);
+    }
+
+    
 
     const rutasFaltantes = [];
 
@@ -231,10 +259,12 @@ const getCotizacionByFolio = async (req, res) => {
     }
 
     // Continuar con el procesamiento si todas las rutas existen...
-    const response = await calcularDetalles(folio,solicitud, solicitudDetalle);
+    
+*/
+    
 
-    res.formatResponse('ok', 200, 'Datos consultados con éxito.', response);
-  }
+    
+   
 } catch (error) {
     await responseError(409, error, res);
   }
