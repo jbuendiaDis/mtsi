@@ -27,6 +27,8 @@ const quoteHistorySchema = new mongoose.Schema({
   fitosanitarias: Number,
   urea: Number,
   extra: Number,
+  pasajeLocalDestino: Number,
+  pasajeLocalOrigen: Number,
   subTotal: Number,
   admon: Number,
   total: Number,

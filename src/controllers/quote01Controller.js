@@ -292,6 +292,13 @@ const getCotizacionByFolio = async (req, res) => {
         let v_urea = 0;
         let v_extra = 0;
 
+        let v_pasajeLocalDestino = 0;
+        let v_pasajeLocalOrigen = 0;
+
+        
+
+        
+
         let v_sueldo = 0;
         let v_pagoEstadia = 0;
         let v_subtotal = 0;
@@ -397,6 +404,10 @@ const getCotizacionByFolio = async (req, res) => {
         v_urea = gastos && gastos.urea ? gastos.urea : 0;
         v_extra = gastos && gastos.extra ? gastos.extra : 0;
 
+
+        v_pasajeLocalDestino = gastos && gastos.pasajeLocalDestino ? gastos.pasajeLocalDestino : 0;
+        v_pasajeLocalOrigen = gastos && gastos.pasajeLocalOrigen ? gastos.pasajeLocalOrigen : 0;
+
         v_sueldo = traslado ? (traslado.sueldo < limiteSueldos ? traslado.sueldo * v_kms : traslado.sueldo) : 0;
         v_pagoEstadia = gastos && gastos.pagoDeEstadia ? gastos.pagoDeEstadia : 0;
         v_subtotal =
@@ -417,7 +428,9 @@ const getCotizacionByFolio = async (req, res) => {
           v_talachas +
           v_fitosanitarias +
           v_urea +
-          v_extra;
+          v_extra+
+          v_pasajeLocalDestino+
+          v_pasajeLocalOrigen;
 
         console.log('v_diesel', v_diesel);
         console.log('v_comidas', v_comidas);
@@ -487,6 +500,8 @@ const getCotizacionByFolio = async (req, res) => {
           fitosanitarias: v_fitosanitarias,
           urea: v_urea,
           extra: v_extra,
+          pasajeLocalDestino: v_pasajeLocalDestino,
+          pasajeLocalOrigen: v_pasajeLocalOrigen,
           subTotal: v_subtotal,
           admon: v_admon,
           total: v_total,
@@ -526,6 +541,9 @@ const getCotizacionByFolio = async (req, res) => {
           fitosanitarias: parseFloat(v_fitosanitarias.toFixed(2)),
           urea: parseFloat(v_urea.toFixed(2)),
           extra: parseFloat(v_extra.toFixed(2)),
+
+          pasajeLocalDestino:  parseFloat(v_pasajeLocalDestino.toFixed(2)),
+          pasajeLocalOrigen: parseFloat(v_pasajeLocalOrigen.toFixed(2)),
 
           sueldo: parseFloat(v_sueldo.toFixed(2)),
 

@@ -41,7 +41,7 @@ const createCountry = async (req, res) => {
 };
 
 const getAllCountries = async (req, res) => {
-  try {
+  /*try {
     const countries = await Country.find();
 
     const countriesWithEstado = await Promise.all(
@@ -63,7 +63,7 @@ const getAllCountries = async (req, res) => {
     res.formatResponse('ok', 202, 'Consulta exitosa', countriesWithEstado);
   } catch (error) {
     await responseError(409, error, res);
-  }
+  }*/
 };
 
 const getCountryByCode = async (req, res) => {
