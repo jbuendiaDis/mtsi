@@ -31,21 +31,6 @@ const createSolicitud = async (req, res) => {
       return res.formatResponse('ok', 204, 'El campo "destinos" es obligatorio y debe ser un array no vacío.', []);
     }
 
-
-    /*
-    // Verificar que todos los destinos tienen el mismo tipoViaje
-    const primerTipoViaje = destinos[0].tipoViaje;
-    const tiposViajeSonIguales = destinos.every((destino) => destino.tipoViaje === primerTipoViaje);
-
-    if (!tiposViajeSonIguales) {
-      return res.formatResponse('ok', 204, 'Todos los destinos deben tener el mismo tipo de viaje.', []);
-    }*/
-    // Buscar la descripción del tipo de viaje usando primerTipoViajeId
-    const tipoViaje = await CatalogModel.findById(primerTipoViaje);
-    if (!tipoViaje) {
-      return res.formatResponse('ok', 204, 'Tipo de viaje no encontrado.--1 ', []);
-    }
-
     // Buscar el cliente asociado al userId
     const userClient = await UserClientModel.findOne({ _id: req.user.data.id });
     if (!userClient) {
@@ -67,9 +52,7 @@ const createSolicitud = async (req, res) => {
       estatus: 'Pendiente', // Asegúrate de definir 'estatus' adecuadamente si es dinámico
       userId: req.user.data.id,
       clienteId: userClient.idCliente.toString(),
-      clienteName: cliente.razonSocial,
-      tipoViajeId: tipoViaje._id,
-      tipoViajeName: tipoViaje.descripcion
+      clienteName: cliente.razonSocial
     }).save();
 
     // Iterar sobre 'destinos' para crear detalles de la solicitud-------------------------------------------------------------------------------------------------------------
@@ -84,22 +67,14 @@ const createSolicitud = async (req, res) => {
       const traslado = await TrasladoModel.findById(destino.tipoTraslado);
 
       let rendimiento;
-      // Realizar la consulta para obtener el dato rendimiento basado en el tipoUnidad
-      console.log("destino.tipoUnidad:",destino.tipoUnidad);
+
       if (destino.tipoUnidad != 'other') {
         rendimiento = await RendimientoModel.findById(destino.tipoUnidad);
-        console.log("rendimiento:",rendimiento);
       }
 
       // Buscar la localidad de origen y destino en la colección countries
       const origenData = await MunicipiosModel.findById(destino.localidadOrigenId);
-      console.log("origenData:",origenData);
       const destinoData = await MunicipiosModel.findById(destino.localidadDestinoId);
-      console.log("destinoData:",destinoData);
-
-      //const peaje = await Peajes.findOne({ localidadOrigen: origenData.codigo, localidadDestino: destinoData.codigo });
-
-      // console.log("peaje:",peaje); localidadOrigenName
 
       return new SolicitudDetalleModel({
         solicitudId: nuevaSolicitud._id,
@@ -141,13 +116,8 @@ const createSolicitud = async (req, res) => {
         destinityCp:destino.destinityCp,
 
 
-
-        
-
       }).save();
     });
-
-    console.log("detallesPromesas:",detallesPromesas);
 
     const detalles = await Promise.all(detallesPromesas);
 
