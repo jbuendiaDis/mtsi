@@ -22,6 +22,12 @@ const rendimientoSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true,
   },
+  otros: {//moche
+    type: Number,
+   },
+   subcontrato: {
+    type: Number,
+   } 
 });
 
 // Crear un modelo basado en el esquema
