@@ -2,6 +2,7 @@ const Rendimientos = require('../models/rednimiento');
 const generateUUID = require('../utils/generateUUID');
 const logAuditEvent = require('../utils/auditLogger');
 const responseError = require('../functions/responseError');
+const getCatalogoById = require('../functions/getCatalogNameById');
 
 // crear rendimiento
 const crearRendimiento = async (req, res) => {
@@ -34,7 +35,22 @@ const crearRendimiento = async (req, res) => {
 // Obtener todos los rendimientos
 const obtenerRendimientos = async (req, res) => {
   try {
-    const rendimientos = await Rendimientos.find();
+    let rendimientos = await Rendimientos.find();
+    
+    rendimientos = await Promise.all(rendimientos.map(async (rendimiento) => {
+      const catalogoCondicion = await getCatalogoById(rendimiento.condicionVeiculoId);
+      const descripcionCatalogoCondicion = catalogoCondicion ? catalogoCondicion.descripcion : '';
+
+      const catalogoEstilo = await getCatalogoById(rendimiento.condicionVeiculoId);
+      const descripcionCatalogoEstilo = catalogoEstilo ? catalogoEstilo.descripcion : '';
+
+      return {
+        ...rendimiento.toObject(), 
+        condicionVeiculoName: descripcionCatalogoCondicion,  
+        estiloCarroceriaName:descripcionCatalogoEstilo
+      };
+    }));
+    
     res.formatResponse('ok', 200, 'Consulta exitosa', rendimientos);
   } catch (error) {
     await responseError(409, error, res);
