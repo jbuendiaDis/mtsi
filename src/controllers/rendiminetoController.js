@@ -41,7 +41,7 @@ const obtenerRendimientos = async (req, res) => {
       const catalogoCondicion = await getCatalogoById(rendimiento.condicionVeiculoId);
       const descripcionCatalogoCondicion = catalogoCondicion ? catalogoCondicion.descripcion : '';
 
-      const catalogoEstilo = await getCatalogoById(rendimiento.condicionVeiculoId);
+      const catalogoEstilo = await getCatalogoById(rendimiento.estiloCarroceriaId);
       const descripcionCatalogoEstilo = catalogoEstilo ? catalogoEstilo.descripcion : '';
 
       return {
