@@ -22,7 +22,7 @@ function adaptData(req, res, next) {
         originCity:destino.originCity,
         destinationState:destino.destinationState,
         destinationCity:destino.destinationCity,
-        modelo:destino.brand,
+        modelo:destino.yearModel,
         transferType:destino.transferType,
         
         tipoSeguro:destino.insuranceType,
