@@ -49,7 +49,7 @@ const SolicitudDetalleSchema = new mongoose.Schema({
   tipoSeguro: {type: String },
   compania: {type: String },
   numeroPoliza: {    type: String },
-  moneyvalue: {    type: String },
+  valuesMoney : {    type: String },
   modelo: {type: String },
   peso: {type: String },
   fotoUnidad: {type: String },
