@@ -62,7 +62,11 @@ const SolicitudDetalleSchema = new mongoose.Schema({
         destinityColonies:{type: String },
         destinityCp:{type: String },
         clienteId:{type: String },
-        clienteName:{type: String },
+        clienteName:{type: String }
+        ,
+  socialReasonOrigin : { type: String },
+  socialReasonDestinity : { type: String },
+  notes : { type: String },
 
   
 

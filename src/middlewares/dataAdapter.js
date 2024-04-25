@@ -52,6 +52,9 @@ function adaptData(req, res, next) {
         
         unitTypeName:destino.unitTypeName,
         transferTypeName:destino.transferTypeName,
+        socialReasonOrigin:destino.socialReasonOrigin,
+        socialReasonDestinity:destino.socialReasonDestinity,
+        notes:destino.notes,
 
 
       }));

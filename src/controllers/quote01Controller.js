@@ -24,17 +24,23 @@ const UserClient = require('../models/userClient');
 const QuoteHistory = require('../models/cotizacionHistorialModel');
 const enviarCorreo = require('../functions/sendMail');
 
-const createSolicitud = async (req, res) => {
+//
+const createSolicitud = async (req, res) => { 
   try {
+    //
     const { tipoSeguro,compania,numeroPoliza,modelo,peso,fotoUnidad,urlMapa,   destinos } = req.body;
+
+    //
     if (!destinos || !Array.isArray(destinos) || destinos.length === 0) {
       return res.formatResponse('ok', 204, 'El campo "destinos" es obligatorio y debe ser un array no vacío.', []);
     }
 
     // Buscar el cliente asociado al userId
     const userClient = await UserClientModel.findOne({ _id: req.user.data.id });
+
+    // Si no se encuentra el cliente asociado al usuario, regresa un error 204
     if (!userClient) {
-      return res.formatResponse('ok', 204, 'Cliente no encontrado para el usuario proporcionado.', []);
+      return res.formatResponse('ok', 204, 'Cliente no encontrado para el usuario proporcionado..', []);
     }
 
     // Obtener el nombre del cliente (razón social) usando el clienteId
@@ -43,7 +49,9 @@ const createSolicitud = async (req, res) => {
       return res.formatResponse('ok', 204, 'Cliente no encontrado.', []);
     }
 
+    // Obtener el último folio de solicitud
     const lastSolicitud = await SolicitudModel.findOne().sort({ folio: -1 });
+    // Calcular el nuevo folio
     const newFolio = lastSolicitud && !isNaN(lastSolicitud.folio) ? lastSolicitud.folio + 1 : 1;
 
     // Crear una nueva solicitud
@@ -56,7 +64,6 @@ const createSolicitud = async (req, res) => {
     }).save();
 
     // Iterar sobre 'destinos' para crear detalles de la solicitud-------------------------------------------------------------------------------------------------------------
-    console.log("destino",destinos);
     const detallesPromesas = destinos.map(async (destino) => {
       // Realizar la consulta para obtener el dato catalogos basado en el tipoViaje
       let v_tipoViaje = null;
@@ -76,6 +83,7 @@ const createSolicitud = async (req, res) => {
       const origenData = await MunicipiosModel.findById(destino.localidadOrigenId);
       const destinoData = await MunicipiosModel.findById(destino.localidadDestinoId);
 
+      // Crear un nuevo detalle de solicitud
       return new SolicitudDetalleModel({
         solicitudId: nuevaSolicitud._id,
         folio: nuevaSolicitud.folio,
@@ -115,7 +123,11 @@ const createSolicitud = async (req, res) => {
         destinityColonies:destino.caldestinityColoniesle,
         destinityCp:destino.destinityCp,
         clienteId: userClient.idCliente.toString(),
-        clienteName: cliente.razonSocial
+        clienteName: cliente.razonSocial,
+
+        socialReasonOrigin: destino.socialReasonOrigin,
+        socialReasonDestinity : destino.socialReasonDestinity,
+        notes :   destino.notes,
 
 
       }).save();
@@ -247,7 +259,6 @@ try {
     await responseError(409, error, res);
   }
 };
-
 
 async function calcularDetalles(solicitudDetalle) {
 
@@ -1056,7 +1067,7 @@ const createQuote01_old = async (req, res) => {
     // Buscar el cliente asociado al userId
     const userClient = await UserClientModel.findOne({ _id: req.user.data.id });
     if (!userClient) {
-      return res.formatResponse('ok', 204, 'Cliente no encontrado para el usuario proporcionado.', []);
+      return res.formatResponse('ok', 204, 'Cliente no encontrado para el usuario proporcionado...', []);
     }
 
     const quotes = await Promise.all(
@@ -1079,7 +1090,7 @@ const createQuote01_old = async (req, res) => {
           estatus,
           folio: newFolio,
           userId: req.user.data.id, // Agregado el campo userId
-          clienteId: userClient.idCliente.toString(),
+          clienteId: userClient.idCliente.toString()
         });
 
         // Guardar el nuevo registro

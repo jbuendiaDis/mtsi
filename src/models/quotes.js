@@ -82,7 +82,7 @@ const dataSchema = new mongoose.Schema({
       message: 'El valor de \'estatus\' no es válido, no coincide con el catálogo padre con ID  65827bdb73bd91d97dbe222b' ,
     },
   },
-   
+
   folio: { type: Number, required: true },
 
   userId: {
@@ -103,12 +103,7 @@ const dataSchema = new mongoose.Schema({
   costoInflacion: { type: Number },
   financiamiento: { type: Number },
   ganancia: { type: Number },
-  costoTotal: { type: Number },
-  
-  
-  
-  
-
+  costoTotal: { type: Number }
   
 });
 
