@@ -13,6 +13,10 @@ function getCurrentFormattedDate() {
 
 const SolicitudesSchema = new mongoose.Schema({
   folio: Number,
+  folioPrefix: {
+    type: String,  
+    required: true
+  },
   estatus: {
     type: String,
     required: true,

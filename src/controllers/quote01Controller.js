@@ -49,14 +49,18 @@ const createSolicitud = async (req, res) => {
       return res.formatResponse('ok', 204, 'Cliente no encontrado.', []);
     }
 
-    // Obtener el último folio de solicitud
+    // Obtener el último folio de solicitud y calcular el nuevo folio
     const lastSolicitud = await SolicitudModel.findOne().sort({ folio: -1 });
-    // Calcular el nuevo folio
-    const newFolio = lastSolicitud && !isNaN(lastSolicitud.folio) ? lastSolicitud.folio + 1 : 1;
+    const currentYear = new Date().getFullYear().toString().substr(-2); // Obtiene los dos últimos dígitos del año actual
+    const newFolioNumber = lastSolicitud && !isNaN(lastSolicitud.folio) ? lastSolicitud.folio + 1 : 1;
+    const newFolioPrefix = `COT-${currentYear}-${newFolioNumber.toString().padStart(5, '0')}`; // Formatea el nuevo folio
+
+
 
     // Crear una nueva solicitud
     const nuevaSolicitud = await new SolicitudModel({
-      folio: newFolio,
+      folio: newFolioNumber,
+      folioPrefix: newFolioPrefix,
       estatus: 'Pendiente', // Asegúrate de definir 'estatus' adecuadamente si es dinámico
       userId: req.user.data.id,
       clienteId: userClient.idCliente.toString(),
@@ -87,6 +91,7 @@ const createSolicitud = async (req, res) => {
       return new SolicitudDetalleModel({
         solicitudId: nuevaSolicitud._id,
         folio: nuevaSolicitud.folio,
+        folioPrefix: newFolioPrefix,
         localidadOrigenId: destino.localidadOrigenId,
         localidadOrigenName: origenData.municipio,
         localidadDestinoId: destino.localidadDestinoId,

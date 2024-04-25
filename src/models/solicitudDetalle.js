@@ -14,6 +14,9 @@ function getCurrentFormattedDate() {
 const SolicitudDetalleSchema = new mongoose.Schema({
   solicitudId: {    type: mongoose.Schema.Types.ObjectId,     ref: 'Solicitudes',    required: true  },
   folio: {    type: Number, required: true },
+  folioPrefix: {
+    type: String 
+  },
   localidadOrigenId: {type: String,required: true},
   localidadOrigenName: {type: String,required: true },
   localidadOrigenCodigo: { type: String,  },
