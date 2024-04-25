@@ -110,6 +110,7 @@ const createSolicitud = async (req, res) => {
         tipoSeguro:destino.tipoSeguro,
         compania: destino.compania,
         numeroPoliza:destino.numeroPoliza,
+        moneyvalue:destino.moneyvalue,
         modelo:destino.modelo,
         peso:destino.peso,
         fotoUnidad:destino.fotoUnidad,

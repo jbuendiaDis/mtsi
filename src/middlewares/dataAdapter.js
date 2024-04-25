@@ -28,6 +28,7 @@ function adaptData(req, res, next) {
         tipoSeguro:destino.insuranceType,
         compania:destino.company,
         numeroPoliza:destino.safeNumber,
+        moneyvalue:destino.moneyValue,
         yearModel:destino.yearModel,
         peso:destino.weight,
         fotoUnidad:destino.photoUnit,
